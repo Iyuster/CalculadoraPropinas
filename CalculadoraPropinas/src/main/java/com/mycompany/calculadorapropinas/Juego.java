@@ -1,19 +1,27 @@
 package com.mycompany.calculadorapropinas;
 
-/**
- *
- * @author Iago Garcia
- */
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class Juego extends JPanel {
-    private enum GameState { MENU, PLAYING, PAUSED, GAME_OVER, WIN }
+    private enum GameState {
+        MENU, PLAYING, PAUSED, GAME_OVER, WIN
+    }
+
     private static final int BASE_WIDTH = 1280;
     private static final int BASE_HEIGHT = 720;
     private float scaleX, scaleY;
@@ -25,8 +33,63 @@ public class Juego extends JPanel {
     private boolean win;
     private int level = 1;
     private GameState currentState;
+    private JButton playButton, exitButton, resumeButton, mainMenuButton;
 
     public Juego() {
+        JFrame frame = new JFrame("Plataformer");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(this);
+        frame.setResizable(false);
+        metodoDeJuego();
+        createButtons();
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+
+        Timer timer = new Timer(16, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (currentState == GameState.PLAYING) {
+                    character.update();
+                }
+                repaint();
+            }
+        });
+        timer.start();
+    }
+
+    private void createButtons() {
+        playButton = new JButton("Jugar");
+        exitButton = new JButton("Salir");
+        resumeButton = new JButton("Reanudar");
+        mainMenuButton = new JButton("Menú Principal");
+
+        playButton.addActionListener(e -> {
+            currentState = GameState.PLAYING;
+            removeAll();
+            revalidate();
+            repaint();
+        });
+
+        exitButton.addActionListener(e -> System.exit(0));
+
+        resumeButton.addActionListener(e -> {
+            currentState = GameState.PLAYING;
+            removeAll();
+            revalidate();
+            repaint();
+        });
+
+        mainMenuButton.addActionListener(e -> {
+            currentState = GameState.MENU;
+            removeAll();
+            add(playButton);
+            add(exitButton);
+            revalidate();
+            repaint();
+        });
+    }
+
+    public void metodoDeJuego() {
         setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
         setBackground(Color.BLUE);
         character = new Character();
@@ -34,7 +97,6 @@ public class Juego extends JPanel {
         currentState = GameState.MENU;
         score = 0;
         loadLevel(level);
-
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -60,16 +122,15 @@ public class Juego extends JPanel {
                 character.keyPressed(e);
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     currentState = GameState.PAUSED;
+                    drawPauseScreen(getGraphics());
                 }
                 break;
             case PAUSED:
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     currentState = GameState.PLAYING;
-                }
-                break;
-            case MENU:
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    currentState = GameState.PLAYING;
+                    removeAll();
+                    revalidate();
+                    repaint();
                 }
                 break;
             case GAME_OVER:
@@ -135,6 +196,7 @@ public class Juego extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         updateScaleFactors();
+
         switch (currentState) {
             case MENU:
                 drawMenu(g);
@@ -158,11 +220,17 @@ public class Juego extends JPanel {
     }
 
     private void drawMenu(Graphics g) {
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, Math.round(48 * scaleY)));
-        g.drawString("Platform Game", Math.round(BASE_WIDTH/4f * scaleX), Math.round(BASE_HEIGHT/3f * scaleY));
-        g.setFont(new Font("Arial", Font.PLAIN, Math.round(24 * scaleY)));
-        g.drawString("Press ENTER to Start", Math.round(BASE_WIDTH/3f * scaleX), Math.round(BASE_HEIGHT/2f * scaleY));
+        removeAll();
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        add(playButton, gbc);
+        add(exitButton, gbc);
+
+        revalidate();
     }
 
     private void drawGame(Graphics g) {
@@ -178,11 +246,17 @@ public class Juego extends JPanel {
     }
 
     private void drawPauseScreen(Graphics g) {
-        g.setColor(new Color(0, 0, 0, 128));
-        g.fillRect(0, 0, getWidth(), getHeight());
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, Math.round(48 * scaleY)));
-        g.drawString("PAUSED", Math.round(BASE_WIDTH/3f * scaleX), Math.round(BASE_HEIGHT/2f * scaleY));
+        removeAll();
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        add(resumeButton, gbc);
+        add(mainMenuButton, gbc);
+
+        revalidate();
     }
 
     private void drawGameOver(Graphics g) {
@@ -405,26 +479,6 @@ public class Juego extends JPanel {
                        Math.round(width * scaleX), Math.round(height * scaleY));
         }
     }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Plataformer");
-        Juego game = new Juego();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.getContentPane().add(game);
-        frame.pack();
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-
-    Timer timer = new Timer(16, new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-            if (game.currentState == GameState.PLAYING) {
-                game.character.update();
-            }
-            game.repaint();
-        }
-    });
-    timer.start();
-    }
 }
+
 
