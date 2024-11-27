@@ -12,8 +12,8 @@ import javax.swing.SwingUtilities; //El uso de SwingUtilities ayuda a prevenir d
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            CalculadoraPropinas calculadora = new CalculadoraPropinas();
-            calculadora.mostrar();
+            CalculadoraPropinas CalculadoraPropinas = new CalculadoraPropinas();
+            CalculadoraPropinas.mostrar();
         });
     }
 } 
