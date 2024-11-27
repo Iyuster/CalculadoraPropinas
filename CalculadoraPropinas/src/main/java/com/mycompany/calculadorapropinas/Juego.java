@@ -160,7 +160,6 @@ public class Juego extends JPanel {
         platforms.clear();
         switch (level) {
             case 1:
-                platforms.add(new Platform(0, BASE_HEIGHT - 20, BASE_WIDTH, 20));
                 platforms.add(new Platform(100, 300, 100, 20));
                 platforms.add(new Platform(250, 200, 100, 20));
                 platforms.add(new Platform(400, 300, 100, 20));
@@ -480,5 +479,3 @@ public class Juego extends JPanel {
         }
     }
 }
-
-
