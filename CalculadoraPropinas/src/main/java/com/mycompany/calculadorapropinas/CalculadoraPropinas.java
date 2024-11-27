@@ -7,7 +7,7 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.text.DecimalFormat;
 
-public class Calculadora {
+public class CalculadoraPropinas {
     private JFrame frame;
     private JTextField precioItemField;
     private JTextField porcentajePropinaField;
@@ -28,7 +28,7 @@ public class Calculadora {
 
     private static final String ARCHIVO_TOTALES = "totales.txt";
 
-    public Calculadora() {
+    public CalculadoraPropinas() {
         totalesMesas = new double[4];  // Inicialización de los totales para 4 mesas
         df = new DecimalFormat("#.##");
         contadorClicks = 0;
@@ -222,9 +222,14 @@ public class Calculadora {
             if (tiempoActual - ultimoClickTiempo < 2000) {
                 contadorClicks++;
                 if (contadorClicks == 3) {
-                    SwingUtilities.invokeLater(() -> {
-                        new Juego(); // Abre el juego en una nueva ventana
-                    });
+                SwingUtilities.invokeLater(() -> {
+                    JFrame frame = new JFrame("PirateWars");
+                    Juego juego = new Juego();
+                    frame.add(juego);
+                    frame.setSize(800, 700);
+                    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    frame.setVisible(true);
+                });
                     contadorClicks = 0;
                     return true;
                 }
@@ -239,3 +244,4 @@ public class Calculadora {
         return false;
     }
 }
+
