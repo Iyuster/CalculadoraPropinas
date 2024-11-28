@@ -2,226 +2,176 @@ package com.mycompany.calculadorapropinas;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.text.DecimalFormat;
+import javax.swing.border.EmptyBorder;
 
-public class CalculadoraPropinas {
-    private JFrame frame;
-    private JTextField precioItemField;
-    private JTextField porcentajePropinaField;
-    private JLabel totalMesaLabel;
-    private JLabel propinaTotalLabel;
-    private JLabel totalConPropinaLabel;
-    private JButton agregarItemButton;
-    private JButton finalizarButton;
-    private JButton resetButton;
-    private JButton volverButton;
+public class Calculadora {
+    // Variables principales de la aplicación
+    private JFrame frame;  // Ventana principal
+    private JTextField precioItemField;  // Campo para ingresar el precio del item
+    private JTextField porcentajePropinaField;  // Campo para ingresar el porcentaje de propina
+    private JLabel totalMesaLabel;  // Etiqueta para mostrar el total de la mesa
+    private JLabel propinaTotalLabel;  // Etiqueta para mostrar la propina calculada
+    private JLabel totalConPropinaLabel;  // Etiqueta para mostrar el total con propina
+    private double[] totalesMesas;  // Array que almacena los totales de las mesas
+    private DecimalFormat df;  // Formateador de números para mostrar solo dos decimales
+    private int mesaActual;  // Índice de la mesa actualmente seleccionada
+    private static final String ARCHIVO_TOTALES = "totales.txt";  // Nombre del archivo que almacena los totales
 
-    private double[] totalesMesas;  // Array para los totales de cada mesa
-    private DecimalFormat df;
+    // Variables para el huevo de pascua
+    private int contadorClicks = 0;
+    private long ultimoClickTiempo = 0;
 
-    private int contadorClicks;
-    private long ultimoClickTiempo;
-    private int mesaActual;  // Para saber qué mesa está activa
-
-    private static final String ARCHIVO_TOTALES = "totales.txt";
-
-    public CalculadoraPropinas() {
-        totalesMesas = new double[4];  // Inicialización de los totales para 4 mesas
-        df = new DecimalFormat("#.##");
-        contadorClicks = 0;
-        ultimoClickTiempo = 0;
-        mesaActual = -1; // Ninguna mesa seleccionada inicialmente
-        cargarTotalesDesdeArchivo();  // Cargamos los totales desde el archivo
-        inicializarVentana();
+    // Constructor: Inicializa las variables, carga los datos y configura la ventana
+    public Calculadora() {
+        totalesMesas = new double[4];  // Inicialización de 4 mesas
+        df = new DecimalFormat("#.##");  // Formato para mostrar 2 decimales
+        mesaActual = -1;  // No hay mesa seleccionada inicialmente
+        cargarTotalesDesdeArchivo();  // Cargar datos de archivo si existen
+        inicializarVentana();  // Configurar la interfaz gráfica
     }
 
+    // Muestra la ventana
     public void mostrar() {
         frame.setVisible(true);
     }
 
-    // Cargar los totales desde el archivo
+    // Carga los totales desde un archivo para persistencia de datos
     private void cargarTotalesDesdeArchivo() {
         try (BufferedReader br = new BufferedReader(new FileReader(ARCHIVO_TOTALES))) {
             String linea;
             int index = 0;
             while ((linea = br.readLine()) != null && index < totalesMesas.length) {
-                totalesMesas[index] = Double.parseDouble(linea);
+                totalesMesas[index] = Double.parseDouble(linea);  // Convertir la línea a double y asignarla
                 index++;
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("Archivo de totales no encontrado. Se inicializarán los totales a 0.");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Archivo de totales no encontrado. Inicializando a 0.");
         }
     }
 
-    // Guardar los totales en el archivo
+    // Guarda los totales en un archivo para persistencia de datos
     private void guardarTotalesEnArchivo() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(ARCHIVO_TOTALES))) {
             for (double total : totalesMesas) {
-                pw.println(total);
+                pw.println(total);  // Guardar cada total en una nueva línea
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // Inicializar la ventana y configuraciones iniciales
+    // Configura la ventana principal y los componentes visuales
     private void inicializarVentana() {
-        frame = new JFrame("Calculadora de Propinas");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        // Obtener el tamaño de la pantalla y ajustar el tamaño de la ventana
-        Dimension pantalla = Toolkit.getDefaultToolkit().getScreenSize();
-        int anchoPantalla = (int) pantalla.getWidth();
-        int altoPantalla = (int) pantalla.getHeight();
-        frame.setSize(anchoPantalla / 2, altoPantalla / 2); // Tamaño adaptado al 50% de la pantalla
+        frame = new JFrame("Calculadora de Propinas");  // Título de la ventana
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  // Cierra el programa al cerrar la ventana
+        frame.setSize(800, 600);  // Dimensiones iniciales
         frame.setLocationRelativeTo(null);  // Centra la ventana en la pantalla
-        frame.setLayout(new CardLayout());  // Usamos un CardLayout para cambiar entre pantallas
+        frame.setLayout(new CardLayout());  // Permite cambiar entre pantallas (menú y calculadora)
 
         // Crear el panel para la selección de mesa
         JPanel menuPanel = new JPanel();
-        menuPanel.setLayout(new GridLayout(2, 2, 20, 20));  // 2 filas y 2 columnas con espacio entre botones
+        menuPanel.setLayout(new GridLayout(2, 2, 20, 20));  // 2 filas, 2 columnas con espacio entre botones
+
+        // Añadir margen externo al panel de botones
+        menuPanel.setBorder(new EmptyBorder(20, 20, 20, 20));  // Márgenes externos de 20 píxeles alrededor del panel
 
         for (int i = 0; i < 4; i++) {
-            JButton mesaButton = new JButton("Mesa " + (i + 1));
-            int mesaIndex = i;  // Guardamos el índice de la mesa
-            mesaButton.addActionListener(e -> abrirCalculadoraParaMesa(mesaIndex));
-            menuPanel.add(mesaButton);
+            int mesaIndex = i;  
+            JButton mesaButton = new JButton("Mesa " + (i + 1));  
+
+            mesaButton.setBackground(new Color(100, 149, 237));  
+            mesaButton.setForeground(Color.WHITE);  
+            mesaButton.setFont(new Font("Arial", Font.BOLD, 16));  
+            mesaButton.setMargin(new Insets(20, 20, 20, 20));  
+
+            mesaButton.addActionListener(e -> abrirCalculadoraParaMesa(mesaIndex));  
+            menuPanel.add(mesaButton);  
         }
 
-        // Crear el panel de la calculadora de propinas
-        JPanel calculadoraPanel = new JPanel();
-        calculadoraPanel.setLayout(new GridLayout(9, 2, 10, 10));
+        // Panel para la calculadora de propinas
+        JPanel calculadoraPanel = new JPanel(new GridBagLayout());  // Usamos GridBagLayout para mayor control
+        GridBagConstraints gbc = new GridBagConstraints();  // Configuración de los componentes
+        gbc.insets = new Insets(10, 10, 10, 10);  // Márgenes entre componentes
+        gbc.fill = GridBagConstraints.HORIZONTAL;  // Componente ocupa todo el ancho
 
-        calculadoraPanel.add(new JLabel("Precio del Item:"));
+        // Añade los componentes con su configuración específica
+        gbc.gridx = 0; gbc.gridy = 0;
+        calculadoraPanel.add(new JLabel("Precio del Item:"), gbc);
         precioItemField = new JTextField();
-        calculadoraPanel.add(precioItemField);
+        gbc.gridx = 1;
+        calculadoraPanel.add(precioItemField, gbc);
 
-        agregarItemButton = new JButton("Agregar Item");
-        agregarItemButton.addActionListener(new AgregarItemListener());
-        calculadoraPanel.add(agregarItemButton);
-        calculadoraPanel.add(new JLabel()); // Espacio en blanco
+        JButton agregarItemButton = new JButton("Agregar Item");
+        agregarItemButton.addActionListener(e -> agregarItem());  // Acción con Lambda
+        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        calculadoraPanel.add(agregarItemButton, gbc);
 
-        calculadoraPanel.add(new JLabel("Total Mesa:"));
+        gbc.gridwidth = 1;
+        gbc.gridx = 0; gbc.gridy = 2;
+        calculadoraPanel.add(new JLabel("Total Mesa:"), gbc);
         totalMesaLabel = new JLabel("0.00 €");
-        calculadoraPanel.add(totalMesaLabel);
+        gbc.gridx = 1;
+        calculadoraPanel.add(totalMesaLabel, gbc);
 
-        calculadoraPanel.add(new JLabel("% Propina:"));
-        porcentajePropinaField = new JTextField("10");
-        calculadoraPanel.add(porcentajePropinaField);
+        gbc.gridx = 0; gbc.gridy = 3;
+        calculadoraPanel.add(new JLabel("% Propina:"), gbc);
+        porcentajePropinaField = new JTextField("10");  // Valor predeterminado
+        gbc.gridx = 1;
+        calculadoraPanel.add(porcentajePropinaField, gbc);
 
-        finalizarButton = new JButton("Finalizar y Calcular");
-        finalizarButton.addActionListener(new FinalizarListener());
-        calculadoraPanel.add(finalizarButton);
+        JButton finalizarButton = new JButton("Finalizar y Calcular");
+        finalizarButton.addActionListener(e -> finalizarCalculo());  // Acción con Lambda
+        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        calculadoraPanel.add(finalizarButton, gbc);
 
-        resetButton = new JButton("Reiniciar Mesa");
-        resetButton.addActionListener(new ResetListener());
-        calculadoraPanel.add(resetButton);
+        JButton resetButton = new JButton("Reiniciar Mesa");
+        resetButton.addActionListener(e -> reiniciarMesa());  // Acción con Lambda
+        gbc.gridy = 5;
+        calculadoraPanel.add(resetButton, gbc);
 
-        calculadoraPanel.add(new JLabel("Propina:"));
+        gbc.gridy = 6; gbc.gridx = 0;
+        calculadoraPanel.add(new JLabel("Propina:"), gbc);
         propinaTotalLabel = new JLabel();
-        calculadoraPanel.add(propinaTotalLabel);
+        gbc.gridx = 1;
+        calculadoraPanel.add(propinaTotalLabel, gbc);
 
-        calculadoraPanel.add(new JLabel("Total con Propina:"));
+        gbc.gridy = 7; gbc.gridx = 0;
+        calculadoraPanel.add(new JLabel("Total con Propina:"), gbc);
         totalConPropinaLabel = new JLabel();
-        calculadoraPanel.add(totalConPropinaLabel);
+        gbc.gridx = 1;
+        calculadoraPanel.add(totalConPropinaLabel, gbc);
 
-        volverButton = new JButton("Volver al Menú Inicial");
-        volverButton.addActionListener(new VolverAlMenuListener());
-        calculadoraPanel.add(volverButton);
+        JButton volverButton = new JButton("Volver al Menú Inicial");
+        volverButton.addActionListener(e -> volverAlMenu());  // Acción con Lambda
+        gbc.gridy = 8; gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        calculadoraPanel.add(volverButton, gbc);
 
-        // Añadir los paneles al CardLayout
+        // Añadir ambos paneles al CardLayout
         frame.add(menuPanel, "Menu");
         frame.add(calculadoraPanel, "Calculadora");
-
-        frame.setVisible(true);
+        frame.setVisible(true);  // Mostrar la ventana
     }
 
+    // Cambia a la calculadora y carga la mesa seleccionada
     private void abrirCalculadoraParaMesa(int mesaIndex) {
-        mesaActual = mesaIndex;  // Establecemos la mesa actual
-        JPanel calculadoraPanel = (JPanel) frame.getContentPane().getComponent(1);
-        CardLayout cl = (CardLayout) frame.getContentPane().getLayout();
-        cl.show(frame.getContentPane(), "Calculadora");
-        actualizarTotalMesa(mesaIndex);  // Actualizar el total de la mesa seleccionada
+        mesaActual = mesaIndex;  // Guarda la mesa seleccionada
+        ((CardLayout) frame.getContentPane().getLayout()).show(frame.getContentPane(), "Calculadora");
+        actualizarTotalMesa(mesaIndex);  // Actualiza el total mostrado
     }
 
-    private class AgregarItemListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String precioText = precioItemField.getText();
-            if (verificarHuevoDePascua(mesaActual, precioText)) {
-                return;
-            }
-            if (!precioText.isEmpty()) {
-                try {
-                    double precioItem = Double.parseDouble(precioText);
-                    if (precioItem < 0) {
-                        JOptionPane.showMessageDialog(frame, "El precio no puede ser negativo.", "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    totalesMesas[mesaActual] += precioItem;  // Actualizamos el total de la mesa seleccionada
-                    actualizarTotalMesa(mesaActual);
-                    guardarTotalesEnArchivo();  // Guardar los datos tras cada cambio
-                    precioItemField.setText("");  // Limpiar el campo de entrada
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(frame, "Por favor, ingrese un precio válido.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-    }
+    // Agrega un item al total de la mesa
+    private void agregarItem() {
+        try {
+            double precioItem = Double.parseDouble(precioItemField.getText());
 
-    private class FinalizarListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            try {
-                double totalMesa = totalesMesas[mesaActual];
-                double porcentajePropina = Double.parseDouble(porcentajePropinaField.getText());
-                double propina = totalMesa * (porcentajePropina / 100);
-                double totalConPropina = totalMesa + propina;
-
-                propinaTotalLabel.setText(df.format(propina) + " €");
-                totalConPropinaLabel.setText(df.format(totalConPropina) + " €");
-
-                totalesMesas[mesaActual] = 0;  // Reiniciar la mesa tras finalizar
-                actualizarTotalMesa(mesaActual);
-                guardarTotalesEnArchivo();  // Guardar el reinicio
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Por favor, ingrese un porcentaje de propina válido.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    private class ResetListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            totalesMesas[mesaActual] = 0;  // Reiniciar el total de la mesa seleccionada
-            actualizarTotalMesa(mesaActual);
-            guardarTotalesEnArchivo();  // Guardar el reinicio
-        }
-    }
-
-    private class VolverAlMenuListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            CardLayout cl = (CardLayout) frame.getContentPane().getLayout();
-            cl.show(frame.getContentPane(), "Menu");
-        }
-    }
-
-    private void actualizarTotalMesa(int mesaIndex) {
-        totalMesaLabel.setText(df.format(totalesMesas[mesaIndex]) + " €");
-    }
-
-    private boolean verificarHuevoDePascua(int mesaIndex, String precioText) {
-        long tiempoActual = System.currentTimeMillis();
-        if (mesaIndex == 3) {  // Mesa 4
-            if (tiempoActual - ultimoClickTiempo < 2000) {
-                contadorClicks++;
-                if (contadorClicks == 3) {
+            // Verificación para el huevo de pascua: si el precio es 1741
+            if (precioItem == 1741) {
+                // Activar el huevo de pascua y abrir el juego
                 SwingUtilities.invokeLater(() -> {
                     JFrame frame = new JFrame("PirateWars");
                     Juego juego = new Juego();
@@ -230,18 +180,51 @@ public class CalculadoraPropinas {
                     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                     frame.setVisible(true);
                 });
-                    contadorClicks = 0;
-                    return true;
-                }
             } else {
-                contadorClicks = 1;
+                // Si el precio no es 1741, agregarlo al total de la mesa
+                totalesMesas[mesaActual] += precioItem;
+                actualizarTotalMesa(mesaActual);  // Actualiza el total de la mesa
             }
-            ultimoClickTiempo = tiempoActual;
-        } else {
-            contadorClicks = 0;
-        }
 
-        return false;
+            precioItemField.setText("");  // Limpiar campo de texto
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(frame, "Precio inválido", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Finaliza el cálculo de la propina
+    private void finalizarCalculo() {
+        try {
+            double porcentaje = Double.parseDouble(porcentajePropinaField.getText());  // Leer porcentaje
+            double propina = (totalesMesas[mesaActual] * porcentaje) / 100;
+            double totalConPropina = totalesMesas[mesaActual] + propina;
+
+            propinaTotalLabel.setText(df.format(propina) + " €");
+            totalConPropinaLabel.setText(df.format(totalConPropina) + " €");
+            totalesMesas[mesaActual] = 0;  // Reinicia el total de la mesa
+            actualizarTotalMesa(mesaActual);
+            guardarTotalesEnArchivo();
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(frame, "Porcentaje inválido", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Reinicia la mesa a 0
+    private void reiniciarMesa() {
+        totalesMesas[mesaActual] = 0;
+        actualizarTotalMesa(mesaActual);
+        guardarTotalesEnArchivo();
+    }
+
+    // Regresa al menú principal
+    private void volverAlMenu() {
+        ((CardLayout) frame.getContentPane().getLayout()).show(frame.getContentPane(), "Menu");
+    }
+
+    // Actualiza el total mostrado para la mesa actual
+    private void actualizarTotalMesa(int mesaIndex) {
+        totalMesaLabel.setText(df.format(totalesMesas[mesaIndex]) + " €");
     }
 }
 
