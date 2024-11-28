@@ -6,7 +6,7 @@ import java.io.*;
 import java.text.DecimalFormat;
 import javax.swing.border.EmptyBorder;
 
-public class Calculadora {
+public class CalculadoraPropinas {
     // Variables principales de la aplicación
     private JFrame frame;  // Ventana principal
     private JTextField precioItemField;  // Campo para ingresar el precio del item
@@ -24,7 +24,7 @@ public class Calculadora {
     private long ultimoClickTiempo = 0;
 
     // Constructor: Inicializa las variables, carga los datos y configura la ventana
-    public Calculadora() {
+    public CalculadoraPropinas() {
         totalesMesas = new double[4];  // Inicialización de 4 mesas
         df = new DecimalFormat("#.##");  // Formato para mostrar 2 decimales
         mesaActual = -1;  // No hay mesa seleccionada inicialmente
@@ -227,4 +227,5 @@ public class Calculadora {
         totalMesaLabel.setText(df.format(totalesMesas[mesaIndex]) + " €");
     }
 }
+
 
